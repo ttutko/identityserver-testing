@@ -51,6 +51,7 @@ namespace mvcidentity
                 .AddInMemoryIdentityResources(Config.GetIdentityResources())
                 .AddInMemoryApiResources(Config.GetApiResources())
                 .AddInMemoryClients(Config.GetClients())
+                .AddAspNetIdentity<ApplicationUser>()
                 .AddLdapUsers<OpenLdapAppUser>(Configuration.GetSection("IdentityServerLdap"), UserStore.InMemory);
 
             services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
