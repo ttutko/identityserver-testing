@@ -16,6 +16,8 @@ using MongoDB.Bson;
 using mvcidentity.Models;
 using AspNetCore.Identity.MongoDbCore.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 namespace mvcidentity
 {
@@ -63,7 +65,13 @@ namespace mvcidentity
                   options.SupportedTokens = SupportedTokens.Both;
               });
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddMvc(config =>
+            {
+                var policy = new AuthorizationPolicyBuilder()
+                 .RequireAuthenticatedUser()
+                 .Build();
+                config.Filters.Add(new AuthorizeFilter(policy));
+            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             //services.AddAuthentication(options =>
             //{
             //    options.DefaultScheme = "Cookies";
@@ -95,6 +103,19 @@ namespace mvcidentity
             app.UseIdentityServer();
             app.UseHttpsRedirection();
             //app.UseCookiePolicy();
+
+            using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            {
+                var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+
+                foreach (var role in new string[] { "Admin", "basicuser" })
+                {
+                    if (!roleManager.RoleExistsAsync(role).GetAwaiter().GetResult())
+                    {
+                        roleManager.CreateAsync(new ApplicationRole(role)).GetAwaiter().GetResult();
+                    }
+                }
+            }
 
             app.UseMvc(routes =>
             {

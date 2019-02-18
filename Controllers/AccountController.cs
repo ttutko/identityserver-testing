@@ -26,6 +26,7 @@ namespace mvcidentity.Controllers
     public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger _logger;
         private readonly IIdentityServerInteractionService _interaction;
@@ -36,6 +37,7 @@ namespace mvcidentity.Controllers
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
+            RoleManager<ApplicationRole> roleManager,
             IPersistedGrantService persistedGrantService,
             SignInManager<ApplicationUser> signInManager,
             ILoggerFactory loggerFactory,
@@ -45,6 +47,7 @@ namespace mvcidentity.Controllers
             IEventService events)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _persistedGrantService = persistedGrantService;
             _signInManager = signInManager;
             _logger = loggerFactory.CreateLogger<AccountController>();
@@ -108,6 +111,14 @@ namespace mvcidentity.Controllers
                     if(identityUser == null)
                     {
                         identityUser = new ApplicationUser(user.Username, user.Username);
+                        identityUser.Favorites.Add(new FavoriteColor { ColorName = "Green", RGB = "0,255,0" });
+
+                        if(user.Username.ToLower() == "bender")
+                        {
+                            var role = await _roleManager.FindByNameAsync("Admin");
+                            identityUser.Roles.Add(role.Id);
+                        }
+
                         var result = await _userManager.CreateAsync(identityUser);
                         if(!result.Succeeded)
                         {
